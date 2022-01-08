@@ -1,0 +1,124 @@
+---
+
+- name: "Creating EC2"
+  hosts: localhost
+  vars:
+    private_key_file: private_key.pem
+    key_name: ansible_ec2
+    sec_grp_name: ansible_sg
+    instance_count: 2
+    ami: "ami-052cef05d01020f1d"
+    type: t2.micro
+    user_data_file: userdata.sh
+    ssh_user: "ec2-user"
+    ssh_port: 22
+    aws_access_key: "AKIAR6JSN7F4CQQYZ4BM"
+    aws_secret_key: "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"
+    region: "ap-south-1"
+  tasks:
+    - name: "Creating Private Key"
+      ec2_key:
+        name: "{{ key_name }}"
+        state: present
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ region }}"
+      register: ec2_key_status
+    - debug:
+        var: ec2_key_status
+
+    - name: "Saving Private Key"
+      when: ec2_key_status.changed == true
+      copy:
+        content: "{{ ec2_key_status.key.private_key }}"
+        dest: "{{ private_key_file }}"
+        mode: 0400
+    - name: "Creating Security Groups"
+      ec2_group:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ region }}"
+        name: "{{ sec_grp_name }}"
+        state: present
+        description: "Allow 22,80,443 access"
+        rules:
+          -  from_port: 22
+             to_port: 22
+             proto: tcp
+             cidr_ip: 0.0.0.0/0
+             cidr_ipv6: ::/0
+             rule_desc: "Allow SSH from ALL"
+
+          -  from_port: 80
+             to_port: 80
+             proto: tcp
+             cidr_ip: 0.0.0.0/0
+             cidr_ipv6: ::/0
+             rule_desc: "Allow HTTP from ALL"
+
+          -  from_port: 443
+             to_port: 443
+             proto: tcp
+             cidr_ip: 0.0.0.0/0
+             cidr_ipv6: ::/0
+             rule_desc: "Allow HTTPS from ALL"
+      register: sec_grp
+    - debug:
+        var: sec_grp
+    - name: "Creating EC2"
+      ec2:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ region }}"
+        count_tag:
+          name: webserver
+        exact_count: "{{ instance_count }}"
+        image: "{{ ami }}"
+        group_id: "{{ sec_grp.group_id }}"
+        instance_type: "{{ type }}"
+        key_name: "{{ key_name }}"
+        user_data: "{{ lookup( 'file', '{{ user_data_file }}')}}"
+        instance_tags:
+          name: webserver
+        wait: yes
+      register: ec2_status
+    - debug:
+        var: ec2_status
+
+    - name: "Creating Dynamic Inventory"
+      add_host:
+        name: "{{ item.public_ip }}"
+        groups: webserver
+        ansible_host: "{{ item.public_ip }}"
+        ansible_user: "{{ ssh_user}}"
+        ansible_ssh_port: "{{ ssh_port }}"
+        ansible_ssh_private_key_file: "{{ private_key_file }}"
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+      with_items:
+        - "{{ ec2_status.tagged_instances }}"
+
+
+
+- name: "Website Hosting"
+  become: true
+  hosts: webserver
+  gather_facts: no
+  tasks:
+
+    - wait_for_connection:
+        timeout: 600
+
+    - name: "Facts gathering"
+      setup:
+
+    - name: "Installing Apache and PHP"
+      yum:
+        name:
+          - httpd
+          - php
+        state: present
+    - name: "Starting/Enabling Apache"
+      service:
+        name: httpd
+        state: restarted
+        enabled: true
