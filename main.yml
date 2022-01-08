@@ -12,8 +12,8 @@
     user_data_file: userdata.sh
     ssh_user: "ec2-user"
     ssh_port: 22
-    aws_access_key: "AKIAR6JSN7F4CQQYZ4BM"
-    aws_secret_key: "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"
+    aws_access_key: ""
+    aws_secret_key: ""
     region: "ap-south-1"
   tasks:
     - name: "Creating Private Key"
