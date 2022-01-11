@@ -31,6 +31,11 @@ Install “boto3”
 
 ## Variables Used
 
+The files used for variable declaration are below : 
+- aws_ec2.var
+- website.vars
+
+
 
 ## Usage
 
@@ -44,12 +49,18 @@ git clone https://github.com/BetcyBabu/ansible_ec2-dynamic-inventry.git
 cd ansible_ec2-dynamic-inventry/
 ```
 
-3. Make the required changes in above mentioned files for variables -aws_ec2.var and website.vars
+3. Make the required changes in files for variables -aws_ec2.var and website.vars
 
 4. Finally, you can run the ansible playbook using the command,
 ```
  ansible-playbook main.yml
 ```
+
+## Result
+
+Now our application has been depolyed in 2 EC2 instances and we can visit this using the public IP or domain name.
+
+![image](https://user-images.githubusercontent.com/23291976/148882707-2b0f1327-797a-46d6-922d-ce934f7acfd2.png)
 
 
 
