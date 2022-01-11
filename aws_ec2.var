@@ -1,0 +1,11 @@
+private_key_file: private_key.pem 
+key_name: "Enter Key pair name that you wish to setup on AWS"
+sec_grp_name: "Enter Security group name that you wish to setup on AWS"
+instance_count: "Enter number of instance you wish to create"
+ami: "Enter your AMI ID"
+type: "Enter Instance Type"
+ssh_user: "SSH Username"
+ssh_port: "SSH port number"
+aws_access_key: "Enter your Access Key"
+aws_secret_key: "Enter your Secrete Key"
+region: "Enter your region"
