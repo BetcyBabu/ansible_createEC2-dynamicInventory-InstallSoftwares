@@ -2,19 +2,8 @@
 
 - name: "Creating EC2"
   hosts: localhost
-  vars:
-    private_key_file: private_key.pem
-    key_name: ansible_ec2
-    sec_grp_name: ansible_sg
-    instance_count: 2
-    ami: "ami-052cef05d01020f1d"
-    type: t2.micro
-    user_data_file: userdata.sh
-    ssh_user: "ec2-user"
-    ssh_port: 22
-    aws_access_key: ""
-    aws_secret_key: ""
-    region: "ap-south-1"
+  vars_files:
+    - aws_ec2.var
   tasks:
     - name: "Creating Private Key"
       ec2_key:
@@ -77,7 +66,6 @@
         group_id: "{{ sec_grp.group_id }}"
         instance_type: "{{ type }}"
         key_name: "{{ key_name }}"
-        user_data: "{{ lookup( 'file', '{{ user_data_file }}')}}"
         instance_tags:
           name: webserver
         wait: yes
@@ -99,10 +87,12 @@
 
 
 
-- name: "Website Hosting"
+- name: "Deploying Application"
   become: true
   hosts: webserver
   gather_facts: no
+  vars_files:
+    - website.vars
   tasks:
 
     - wait_for_connection:
@@ -111,13 +101,33 @@
     - name: "Facts gathering"
       setup:
 
-    - name: "Installing Apache and PHP"
+    - name: "Installing Apache, PHP, GIT"
       yum:
         name:
           - httpd
           - php
+          - git
         state: present
-    - name: "Starting/Enabling Apache"
+
+    - name: "Cloning from Git"
+      git:
+        repo: "{{ url }}"
+        dest: /var/website_files/
+      register: clone_status
+
+    - debug:
+        var: clone_status
+
+    - name: "Copying website files to website document root"
+      when: clone_status.changed == true
+      copy:
+        remote_src: yes
+        src: /var/website_files/
+        dest: /var/www/html/
+        owner: "{{ owner }}"
+        group: "{{ group}}"
+    - name: "Restarting/Enabling Apache service"
+      when: clone_status.changed == true
       service:
         name: httpd
         state: restarted
