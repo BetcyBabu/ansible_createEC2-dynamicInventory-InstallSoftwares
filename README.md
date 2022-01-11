@@ -29,3 +29,28 @@ Install “boto3”
 
 >> pip2 install  boto3
 
+## Variables Used
+
+
+## Usage
+
+1. Clone the repository using the below command
+
+```
+git clone https://github.com/BetcyBabu/ansible_ec2-dynamic-inventry.git
+```
+2. 
+```
+cd ansible_ec2-dynamic-inventry/
+```
+
+3. Make the required changes in above mentioned files for variables -aws_ec2.var and website.vars
+
+4. Finally, you can run the ansible playbook using the command,
+```
+ ansible-playbook main.yml
+```
+
+
+
+
