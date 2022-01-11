@@ -1,4 +1,4 @@
-# ansible createEC2 dynamicInventry Install Softwares
+# ansible createEC2 dynamicInventry Deploy Application
 
 Usually Ansible require an inventory file to find out on which machine it should work.
 
